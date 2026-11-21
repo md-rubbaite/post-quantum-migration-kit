@@ -1,0 +1,74 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  scanner:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    defaults:
+      run:
+        working-directory: scanner
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e ".[dev]"
+      - run: ruff check . && ruff format --check .
+      - run: pytest -q
+
+  inventory:
+    needs: scanner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install ./scanner
+      - name: Scan the sample legacy application
+        run: |
+          pqcscan examples/legacy-app --config examples/pqcscan.toml --format markdown --out reports/inventory.md
+          pqcscan examples/legacy-app --config examples/pqcscan.toml --format sarif --out reports/inventory.sarif
+          pqcscan examples/legacy-app --config examples/pqcscan.toml --format json --out reports/inventory.json
+          cat reports/inventory.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cryptographic-inventory
+          path: reports/
+
+  dotnet:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            require_pqc: "false" # depends on the runner's OpenSSL (3.5+ needed)
+          - os: windows-latest
+            require_pqc: "true" # Windows CNG ships ML-KEM/ML-DSA; PQC tests must really run here
+    runs-on: ${{ matrix.os }}
+    env:
+      REQUIRE_PQC: ${{ matrix.require_pqc }}
+      DOTNET_NOLOGO: "true"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet test dotnet/tests/QuantumSafe.Crypto.Tests -c Release --logger "console;verbosity=normal"
+      - run: dotnet run --project dotnet/samples/HybridDemo -c Release
