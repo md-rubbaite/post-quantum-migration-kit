@@ -1,0 +1,5 @@
+# Planning assumptions for the sample application.
+[pqcscan]
+data_shelf_life_years = 10   # payment records and partner traffic must stay confidential for 10 years
+migration_years = 3          # realistic time to migrate this system end to end
+exclude = ["**/vendor/**"]

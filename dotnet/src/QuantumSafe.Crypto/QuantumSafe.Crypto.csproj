@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Crypto-agile key establishment and signatures for .NET 10: classical, ML-KEM and hybrid ECDH + ML-KEM, ML-DSA.</Description>
+    <!-- SYSLIB5006: parts of the .NET 10 PQC surface are [Experimental] while IETF encodings are finalised. -->
+    <NoWarn>$(NoWarn);SYSLIB5006</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="QuantumSafe.Crypto.Tests" />
+  </ItemGroup>
+</Project>
