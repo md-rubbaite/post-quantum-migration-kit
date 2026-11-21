@@ -45,7 +45,7 @@ public static class Signers
             {
                 PqcSupport.EnsureMlDsa();
                 using var key = MLDsa.ImportMLDsaPublicKey(MLDsaAlgorithm.MLDsa65, publicKey);
-                return key.VerifyData(data, signature);
+                return key.VerifyData(data.AsSpan(), signature.AsSpan());
             }
 
             default:
@@ -84,15 +84,16 @@ public static class Signers
             get
             {
                 var pk = new byte[MLDsaAlgorithm.MLDsa65.PublicKeySizeInBytes];
-                _key.ExportMLDsaPublicKey(pk);
+                _key.ExportMLDsaPublicKey(pk.AsSpan());
                 return pk;
             }
         }
 
         public byte[] Sign(byte[] data)
         {
+            ArgumentNullException.ThrowIfNull(data);
             var signature = new byte[MLDsaAlgorithm.MLDsa65.SignatureSizeInBytes];
-            _key.SignData(data, signature);
+            _key.SignData(data.AsSpan(), signature.AsSpan());
             return signature;
         }
 
