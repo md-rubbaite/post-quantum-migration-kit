@@ -45,7 +45,7 @@ jobs:
           pqcscan examples/legacy-app --config examples/pqcscan.toml --format sarif --out reports/inventory.sarif
           pqcscan examples/legacy-app --config examples/pqcscan.toml --format json --out reports/inventory.json
           cat reports/inventory.md >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: cryptographic-inventory
           path: reports/
